@@ -1,0 +1,715 @@
+---
+title: "Trabajo Final"
+author: "Miembros: Verónica Effio Pangalima (20098041) y Paolo Sánchez Guerra (20172119)"
+output:
+ rmdformats::readthedown: 
+ code_folding: show 
+ self_contained: true
+ thumbnails: false
+ lightbox: false
+pkgdown:
+ as_is: true
+---
+
+```{r include=FALSE}
+library(rio)
+data=import("https://github.com/veronicaeffio/trabajo-final/raw/main/Peru_LAPOP_2016.dta")
+```
+
+```{r include=FALSE}
+library(knitr)
+library(rmarkdown) 
+library(fpp2) 
+library(dplyr) 
+library(car)
+library(jmv)
+library(descr) 
+library(psych)
+library(gplots) 
+library(rmdformats)
+```
+
+```{r include=FALSE}
+str(data$vb2)
+data$participacion=as.factor(data$vb2)
+levels(data$participacion)=c("participo", "no_participo")
+
+str(data$q1)
+data$sexo=as.factor(data$q1)
+levels(data$sexo)=c("hombre", "mujer")
+
+str(data$q2) 
+data$edad=data$q2
+
+str(data$estratopri) 
+data$zona=as.factor(data$estratopri)
+levels(data$zona)=c("Costa_Norte","Costa_Sur","Lima_Metropolitana","Selva", "Sierra_Centro","Sierra_Norte","Sierra_Sur")
+
+str(data$ed) 
+data$educacion=data$ed
+
+str(data$q10g) 
+data$ingresos=data$q10g
+
+str(data$pn4) 
+data$satisfaccion_demo=car::recode(data$pn4, "1=4; 2=3; 3=2; 4=1")
+
+str(data$pol1) 
+data$interes_politica=car::recode(data$pol1, "1=4; 2=3; 3=2; 4=1")
+
+str(data$b21) 
+data$confianza_partidos=data$b21
+
+str(data$b12)
+data$confianza_FFAA=data$b12
+
+str(data$b13)
+data$confianza_Legislativo=data$b13
+
+str(data$b18)
+data$confianza_PNP=data$b18
+
+str(data$b21a)
+data$confianza_Ejecutivo=data$b21a
+
+str(data$b32)
+data$confianza_Municipios=data$b32
+
+str(data$b47a)
+data$confianza_elecciones=data$b47a
+
+str(data$ing4)
+data$democracia_mejor_regimen=data$ing4
+
+str(data$exc7) 
+data$percepcion_corrupcion=car::recode(data$exc7, "1=4; 2=3; 3=2; 4=1")
+```
+
+```{r include=FALSE}
+data = select(data, participacion, sexo, edad, zona, educacion, ingresos, satisfaccion_demo, democracia_mejor_regimen, interes_politica, confianza_partidos, confianza_FFAA, confianza_PNP, confianza_Ejecutivo, confianza_Legislativo, confianza_Municipios, confianza_elecciones, percepcion_corrupcion)
+```
+
+## Video 
+
+https://youtu.be/1W9urNqkRhY
+
+<center> <h1>Determinantes de la participación electoral en el Perú</h1> </center>
+
+## Introduccion 
+<div style="text-align: justify">
+
+Durante las últimas décadas, la democracia se ha convertido en el régimen político más aceptado a nivel mundial. A pesar de sus cuestionamientos, diversos actores velan por mantener ese tipo de régimen. Es así que en la ciencia política, la democracia es uno de los más importantes temas de estudio. Incluso, como menciona Casullo (2015), la disciplina ha avanzado con el objetivo de fortalecer la democracia, especialmente, la democracia liberal.
+
+En esa línea, parte importante de la democracia liberal es la celebración de elecciones. A pesar de las diferencias, hay un consenso en la academia de que un requerimiento mínimo para considerar a un régimen como democrático es la realización de elecciones libres y participativas.
+
+En América Latina, recientemente se celebraron elecciones en Argentina, Bolivia, Chile, Ecuador, Paraguay y Perú. El hecho de que esta práctica democrática se mantenga en el continente es importante ya que la región se ha caracterizado por vivir largos ciclos autoritarios. Por ello, los Estados buscan mejorar sus sistemas electorales para fortalecer cada vez más el régimen democrático. Por ejemplo, en Perú, en los últimos años, la reforma política se ha vuelto relevante. Uno de los ejes de esta reforma propuesta por la Comisión de Alto Nivel para la Reforma Política abarca cambios en el sistema electoral. Entre ellos se encuentran cambios en las circunscripciones, impedimentos para ser candidato, fechas de elecciones, entre otras.
+
+Sin embargo, la presente investigación busca enfocarse en el otro actor de las elecciones: la ciudadanía. El tema de investigación es la participación electoral en el Perú. Este tema también es un objeto de estudio importante en la academia, principalmente, por los efectos que puede tener sobre las democracias. Como menciona, Nohlen (2004), “la democracia se legitima y, al mismo tiempo, se consolida por medio de la participación masiva en los actos electorales” (p. 137). Es decir, si bien la celebración de elecciones es importante, no tendría los efectos esperados si la participación ciudadana fuese nula.
+
+En Perú, durante las últimas elecciones luego del retorno a la democracia, se observa una participación electoral constante. Según Hidalgo y Boyco (2021), el ausentismo durante las primeras vueltas de las elecciones generales ha sido en promedio 17%. Solo ha variado en elecciones con contextos particulares como la pandemia o con polarización. Ello quiere decir que la participación electoral tiene un porcentaje constante en las últimas elecciones. Por ello, consideramos que es probable que la población que participa electoralmente debe tener características que motivan esta participación. En tal sentido, la pregunta que busca responder este trabajo es ¿Qué influye en la probabilidad que la ciudadanía peruana participe de las elecciones generales mediante el voto?
+
+La literatura sobre este tema es variada. Los autores pueden diferir o no ya que mayormente depende de las particularidades de cada elección. A su vez, las investigaciones suelen comparar países considerando a la población como un todo. Sin embargo, presentan posibles factores que se aplican a la motivación ciudadana para participar en elecciones.
+
+Según la ONPE (2019), dentro del grupo de los que se abstiene al votar por factores individuales se encuentran elementos como la edad, la educación, el nivel económico individual, el género, el empleo formal y el lugar físico en el que se desarrolla la votación. En tanto, el grupo que se abstiene de votar por motivos contextuales predominan factores que involucran la pertenencia del ciudadano a sindicatos, a grupos minoritarios o su participación en espacios de socialización política.
+
+Wolfinger y Rosenstone (1980) y Blais (2000), citados en Blais (2008) señalan factores que pueden influir directamente sobre la ciudadanía. Los autores afirman que, “a nivel individual la propensión de ir a votar se encuentra asociada a varias características sociodemográficas y especialmente a la edad y la educación” (p. 16). Nohlen (2004) también menciona que el abstencionismo depende del nivel educativo. Lamentablemente, los autores no desarrollan pero otros sí que ayudan a complementar lo propuesto. 
+
+En cuanto a la edad, según Blais (2000), los jóvenes son menos propensos a votar que los adultos y precisamente se observó que los jóvenes reflejan desafección por la política y políticos en general. Lo cual parte de una precaria cultura política  por parte de este grupo, sobre todo en Latinoamérica, que los aleja de participar activamente en política.
+
+En cuanto a educación, Blais (2000) menciona que los ciudadanos con acceso a este servicio se encuentran más socializados con respecto a su deber cívico en las urnas. Esto hace que las personas que han accedido a mayor educación sean más conscientes de lo que significa elegir a un representante.
+
+El factor económico también puede ser un predictor para una mayor o menor abstención de votos puesto que en países donde hay sanciones para prevenir el ausentismo, las poblaciones más pobres son las más interesadas en ejercer su voto. Por el contrario, donde se analiza la participación electoral como facultativa, se observa que las poblaciones más pobres priorizan sus necesidades básicas que el acto electoral (Blais, 2000).
+
+Por ello, Blais (2008) recalca que el efecto se produce cuando existen sanciones, ya que las personas verían un costo al hecho de no asistir. Entonces, en base a ello, podríamos especular que el dinero juega como un factor porque quienes participan probablemente lo hagan para no perder dinero. Debido a las diferencias económicas entre ciudadanos, probablemente a algunos no les interese tal pérdida. Así que un posible factor podría ser el nivel de ingresos de las personas.
+
+Asimismo, el lugar físico donde se desarrolla la votación es importante en el caso de Latinoamérica porque la población rural tiende a votar menos por su geografía ya que dirigirse al lugar de votación es costoso, sin embargo esto cambia al aplicarse las multas por abstención de voto.
+
+Nohlen (2004) también plantea factores políticos que podrían afectar la participación electoral. El autor señala tres variables: grado de identificación del elector con los partidos, interés en la política y satisfacción con la política. Según el autor, cuando estos factores son de un grado mayor, la partición electoral también será mayor.
+
+Además, Blais (2000) menciona que la influencia de los sindicatos u organizaciones civiles de participación política son muy importantes porque estas poseen una agenda política e intereses determinados en las decisiones de gobierno y esto sirve como espacio de socialización política donde los ciudadanos se informan sobre qué partido representa mejor sus intereses. 
+
+Maldonado (2011), también menciona que un factor importante es si los ciudadanos están empleados o no en una institución pública porque esto desarrolla actitudes e interés por la política, lo cual implica que al depender directamente de una institución pública, votar por un partido político que lo beneficie personalmente es importante. 
+
+Finalmente, la ONPE (2019) considera que la principal alternativa para aumentar la participación electoral es aproximar la urna al elector mediante la mejora de la administración electoral. Lo cual supone un mejor y eficiente horario de apertura, la flexibilización de la jornada laboral y el establecimiento de mesas especiales para ciudadanos con discapacidad o problemas de salud. Un organismo electoral presente y cercano a la ciudadanía es un buen primer paso para motivar la participación política, y es que, sin una activa participación ciudadana, preservar y mejorar nuestro sistema democrático no es una tarea factible.
+
+Por todo lo visto, esta investigación plantea como respuesta tentativa que factores económicos, sociodemográficos y políticos tales como la edad, sexo, zona de residencia, nivel de ingresos, educación, apoyo a la democracia, entre otros pueden influir en la probabilidad de que la ciudadanía peruana decida participar de las elecciones. 
+
+## Metodología 
+<div style="text-align: justify">
+
+Se plantea desarollar diversas pruebas estadísticas para encontrar si es que algunas características de la ciudadanía influyen en la probabilidad de participar en elecciones. Para ello, se usará la base de datos del Proyecto de Opinión Pública de América Latina (LAPOP) del año 2016 respecto al Perú. En esta base de datos, se observan diversas variables que ayudan con los fines del trabajo. 
+
+Por un lado, la variable más importante, la dependiente, será la participación electoral en las elecciones generales de 2016. Por otro lado, se cuentan con 16 variables independientes que servirán para analizar si son factores que influyen en la participación electoral. Entre ellas se encuntran el sexo, edad, zona territorial, años de educación, nivel de ingresos, nivel de satisfacción con la democracia, interés en política, percepción de la corrupción, y la confianza en los partidos políticos, elecciones y otras instituciones.  
+
+Primero, se planteará una descripción de la ciudadanía peruana respecto a las 16 variables seleccionadas. Posteriormente, se realizará una análisis factorial para reducir algunas de las variables independientes. De tal forma, se desarrollará un análisis bivariado de cada variable independiente resultante con la dependiente (participación electoral). Ello con el fin de ver si es existe una asociación entre cada par de variables e ir planteando resultados parciales. Finalmente, se plantearán diversos modelos de regresión logístico binario para determinar cuáles son los factores que más influyen en la probabilidad de votar. 
+
+## Unidad de análisis 
+<div style="text-align: justify">
+
+En esta sección, se analizarán las características de la unidad de análisis: los ciudadanos peruanos. En base a las variables que se han seleccionado. 
+
+### 1. ¿Cómo fue la participación electoral en las elecciones generales de 2016?
+
+```{r echo=FALSE}
+kable(data %>% group_by(participacion) %>% summarise(Frecuencia = n(), Porcentaje = (n()/nrow(.))*100))
+pie(table(data$participacion), col= c("brown2", "darkorange1"), main = "Gráfico A. Participación electoral")
+legend("topleft", legend = c("Participó = 89.2%", "No participó = 10.8%"), fill =  c("brown2", "darkorange1"))
+```
+
+<div style="text-align: justify">
+
+Se verifica que el 89.2% de la ciudadanía participó en las elecciones y que el 10.8% no participó. Lo cual refleja que la mayor cantidad de la población peruana participó de las elecciones generales del 2016.
+
+### 2. ¿Cuál es la distribución por sexo de la ciudadanía?
+
+```{r echo=FALSE}
+kable(data %>% group_by(sexo) %>% summarise(Frecuencia = n(), Porcentaje = (n()/nrow(.))*100))
+```
+
+```{r include=FALSE}
+pie(table(data$sexo), col= c("mediumslateblue", "mediumseagreen"), main = "Gráfico B. Distribución por sexo")
+legend("topleft", legend = c("Hombre = 50.28%", "Mujer = 49.72%"), fill =  c("mediumslateblue", "mediumseagreen"))
+```
+
+<div style="text-align: justify">
+
+De la cantidad total de la ciudadanía, el 50.28% pertenece a los hombres y el 49.72% pertenece a las mujeres. Es decir, se cuenta con una muestra paritaria de la población según sexo, como es en la realidad. 
+
+### 3. ¿Cuál es la distribución por edad de la ciudadanía?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(edad),freq = TRUE)
+hist(data$edad, main="Gráfico C. Distribución por edad", c=("green3"), xlab = "Edad", ylab = "Frecuencia")
+```
+
+<div style="text-align: justify">
+
+La edad máxima de ciudadanía que se verifica es de 86 años y la mínima es de 18 años. El promedio de edad de los ciudadanos es de 38 años y la mediana de 37 años. La mayor cantidad de la población se encuentra entre los 18 y 40 años.
+
+### 4. ¿Cuál es la distribución territorial de la ciudadanía?
+
+```{r echo=FALSE}
+kable(data %>% group_by(zona) %>% summarise(Frecuencia = n(), Porcentaje = (n()/nrow(.))*100))
+```
+
+```{r include=FALSE}
+pie(table(data$zona), col= c("#55DDE0", "#33658A", "#2F4858", "#F6AE2D", "#F26419", "#999999","salmon","gray"), main = "Gráfico D. Distribución por zona")
+```
+
+<div style="text-align: justify">
+
+Se observa que todas las regiones del Perú se encuentran presentes en la muestra. A su vez, están de forma desagregada, lo cual es favorable ya que dentro de ellas también pueden existir diferencias.
+
+### 5. ¿Cuántos son los años de educación de la ciudadanía?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(educacion),freq = TRUE)
+```
+
+```{r echo=FALSE}
+hist(data$educacion, main="Gráfico B. Distribución por años de educación", c=("red4"), xlab = "Años de educación", ylab = "Frecuencia")
+```
+
+<div style="text-align: justify">
+
+Se evidencia que en promedio la cantidad de años de educación que reciben los ciudadanos es de 11 años, además la cantidad mínima de años que estudia es 0, es decir no pueden estudiar en ningún momento de su vida y la cantidad máxima de años que estudian los ciudadanos es de 18. A su vez, el histograma muestra que la mayor cantidad de años de educación se concentra en los 11 años, mientras que los demás, tienen cantidades pequeñas. 
+
+### 6. ¿Cuál es el nivel de ingresos de la ciudadanía?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(ingresos),freq = TRUE)
+```
+
+```{r echo=FALSE}
+hist(data$ingresos, main="Gráfico C. Distribución por nivel de ingresos", c=("hotpink4"), xlab = "Nivel de ingresos", ylab = "Frecuencia")
+```
+
+<div style="text-align: justify">
+
+El promedio de ingresos de la ciudadanía es en el nivel 7, es decir entre 851 soles a  950 soles. El ingreso más alto el de 2700 soles y 0 soles el nivel más bajo de ingresos, es decir, muchos no tienen ningún tipo de ingreso. A su vez, se observa en el gráfico que hay una brecha grande con respecto a los que tienen un ingresos altos ya que la mayor cantidad de la población se encuentra en niveles bajos de ingresos. 
+
+### 7. ¿Cuál es el nivel de satisfacción con la democracia de la ciudadanía?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(satisfaccion_demo),freq = TRUE)
+
+barplot(table(data$satisfaccion_demo), col=c("darkslategrey","darkslategray4","darkslategray3","darkslategray2"),main = "Gráfico G. Satisfacción con la democracia", ylab= "Frecuencia", xlab = "Nivel")
+legend("topright", legend = c("1 = Muy insatifecho", "2 = Insatisfecho", "3 = Satisfecho", "4 = Muy satisfecho"), fill =  c("darkslategrey","darkslategray4","darkslategray3","darkslategray2"))
+```
+
+<div style="text-align: justify">
+
+El promedio de satisfacción es 2.2 lo cual significa un nivel insatisfecho con la democracia. En esa línea, se verifica que la satisfacción con respecto a la democracia es de 13.39 % para muy insatisfecho, 52.58% para insatisfecho, 28.45 % para satisfecho y 5.56% para muy satisfecho.
+
+### 8. ¿Que tan de acuerdo está la ciudadanía de que la democracia es el mejor sistema político?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(democracia_mejor_regimen),freq = TRUE)
+```
+
+<div style="text-align: justify">
+
+En promedio la ciudadania esta algo  de acuerdo con que la democracia es el mejor regimen 
+
+### 9. ¿Cuál es el nivel de interés en política de la ciudadanía?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(interes_politica),freq = TRUE)
+barplot(table(data$interes_politica), col=c("purple4","slateblue4","slateblue3","plum3"),main = "Gráfico H. Interés en política", ylab= "Frecuencia", xlab = "Nivel")
+legend("topright", legend = c("1 = Nada", "2 = Poco", "3 = Algo", "4 = Mucho"), fill =  c("purple4","slateblue4","slateblue3","plum3"))
+```
+
+<div style="text-align: justify">
+
+El nivel de interés por la política de la ciudadanía varía mostrando el 32.68% está nada interesado, el 36.25% poco interesado, el  22.67% algo interesado y el 8.38% muy interesado. La gran parte de la ciudadanía está poco o nada interesada en política y que menos ciudadanos tienen algo o mucho interés. En promedio, el nivel de interés en política por parte de la ciudadanía es poco.
+
+### 10. ¿Cuál es el nivel de confianza hacia los partidos políticos de la ciudadanía?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(confianza_partidos),freq = TRUE)
+
+hist(data$confianza_partidos, main="Gráfico I. Confianza en los partidos políticos", c=("lightsalmon4"), xlab = "Nivel de confianza", ylab = "Frecuencia")
+legend("topright", legend = c("Donde 1 = Baja confianza y 7 = Mucha confianza"))
+```
+
+<div style="text-align: justify">
+
+Se evidencia que 37.49% de la ciudadanía tiene un bajo nivel de confianza en los partidos políticos y que el 1.37% tiene mucha confianza. A su vez, el promedio de confianza en 2.43, lo cual significa un nivel bajo.
+
+### 11. ¿Cuál es el nivel de confianza hacia las Fuerzas Armadas?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(confianza_FFAA),freq = TRUE)
+```
+
+<div style="text-align: justify">
+
+Se evidencia que 4.99% de la ciudadanía tiene un bajo nivel de confianza en las Fuerzas Armadas y que el 18.99% tiene mucha confianza. A su vez, el promedio de confianza en 4.88, lo cual significa un nivel medio.
+
+### 12. ¿Cuál es el nivel de confianza hacia a la Policía Nacional
+
+```{r include=FALSE}
+descriptives(data,vars=vars(confianza_PNP),freq = TRUE)
+```
+
+Se evidencia que 4.99% de la ciudadanía tiene un bajo nivel de confianza en los Policía Nacional del Perú y que el 18.99% tiene mucha confianza. A su vez, el promedio de confianza en 4.88, lo cual significa un nivel medio.
+
+### 13. ¿Cuál es el nivel de confianza hacia el Poder Legislativo?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(confianza_Legislativo),freq = TRUE)
+```
+
+<div style="text-align: justify">
+
+Se evidencia que 27.46% de la ciudadanía tiene un bajo nivel de confianza en el Poder Legislativo y que el 2.49% tiene mucha confianza. A su vez, el promedio de confianza en 2.9, lo cual significa un nivel bajo.
+
+### 14. ¿Cuál es el nivel de confianza hacia el Poder Ejecutivo?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(confianza_Ejecutivo),freq = TRUE)
+```
+
+<div style="text-align: justify">
+
+Se evidencia que 22.64% de la ciudadanía tiene un bajo nivel de confianza en el Poder Ejecutivo y que el 3.88% tiene mucha confianza. A su vez, el promedio de confianza en 3.3, lo cual significa un nivel bajo.
+
+### 15. ¿Cuál es el nivel de confianza hacia las municipalidades?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(confianza_Municipios),freq = TRUE)
+```
+
+<div style="text-align: justify">
+
+Se evidencia que 22.71% de la ciudadanía tiene un bajo nivel de confianza en las municipalidades y que el 3.49% tiene mucha confianza. A su vez, el promedio de confianza en 3.1 , lo cual significa un nivel bajo.
+
+### 16. ¿Cuál es el nivel de confianza en las elecciones?
+
+```{r include=FALSE}
+descriptives(data,vars=vars(confianza_elecciones),freq = TRUE)
+```
+
+<div style="text-align: justify">
+
+Se evidencia que 10.73% de la ciudadanía tiene un bajo nivel de confianza en las elecciones y que el 6.54% tiene mucha confianza. A su vez, el promedio de confianza en 3.9 , lo cual significa un nivel medio.
+
+### 17. ¿Cuál es la percepción sobre la corrupción? 
+
+```{r include=FALSE}
+descriptives(data,vars=vars(percepcion_corrupcion),freq = TRUE)
+```
+
+<div style="text-align: justify">
+
+Se evidencia que 7.88% de la ciudadanía percibe poca corrupcion y que el 56.71% percibe alto nivel de corrupcion. A su vez, el promedio de confianza en 3.24 , lo cual significa un algo regular.
+
+## Análisis Factorial
+<div style="text-align: justify">
+
+De las 16 variables independientes consideradas, 7 de ellas hacen referencia a la confianza a diversas instituciones. Por ello, en esta sección se desarrollará un Análisis Factorial por factor común con el objetivo de reducir esas variables en una menor cantidad.
+
+```{r include=FALSE}
+names(data)
+indice<- data[,c(10:16)]
+names(indice)
+```
+
+```{r include=FALSE}
+indice$confianza_partidos[is.na(indice$confianza_partidos)] <- mean(indice$confianza_partidos,na.rm=TRUE)
+indice$confianza_FFAA[is.na(indice$confianza_FFAA)] <- mean(indice$confianza_FFAA,na.rm=TRUE)
+indice$confianza_Legislativo[is.na(indice$confianza_Legislativo)] <- mean(indice$confianza_Legislativo,na.rm=TRUE)
+indice$confianza_PNP[is.na(indice$confianza_PNP)] <- mean(indice$confianza_PNP,na.rm=TRUE)
+indice$confianza_Ejecutivo[is.na(indice$confianza_Ejecutivo)] <- mean(indice$confianza_Ejecutivo,na.rm=TRUE)
+indice$confianza_Municipios[is.na(indice$confianza_Municipios)] <- mean(indice$confianza_Municipios,na.rm=TRUE)
+indice$confianza_elecciones[is.na(indice$confianza_elecciones)] <- mean(indice$confianza_elecciones,na.rm=TRUE)
+
+summary(indice)
+```
+
+```{r include=FALSE}
+library(polycor)
+corMatrix=polycor::hetcor(indice)$correlations
+corMatrix
+```
+
+```{r include=FALSE}
+KMO(corMatrix) 
+```
+
+```{r include=FALSE}
+cortest.bartlett(corMatrix,n=nrow(indice))$p.value>0.05
+```
+
+```{r include=FALSE}
+eigen2=eigen(cor(corMatrix, use="complete"))
+eigen2$values
+```
+
+```{r include=FALSE}
+factorial=fa(indice,nfactors = 3,rotate = "varimax",fm="minres")
+```
+
+```{r include=FALSE}
+print(factorial$loadings,cutoff = 0.4)
+```
+
+```{r include=FALSE}
+factorial_casos=as.data.frame(factorial$scores)
+data$confianza_institucional=factorial_casos$MR1
+data$confianza_partidos_politicos=factorial_casos$MR2
+data$confianza_fuerzas_orden=factorial_casos$MR3
+```
+
+```{r include=FALSE}
+library(BBmisc)
+data$confianza_institucional = normalize(data$confianza_institucional, 
+                                        method = "range", 
+                                        margin=2, # by column
+                                        range = c(0, 100))
+data$confianza_partidos_politicos = normalize(data$confianza_partidos_politicos, 
+                                        method = "range", 
+                                        margin=2, # by column
+                                        range = c(0, 100))
+data$confianza_fuerzas_orden = normalize(data$confianza_fuerzas_orden, 
+                                        method = "range", 
+                                        margin=2, # by column
+                                        range = c(0, 100))
+
+```
+
+```{r include=FALSE}
+factorial$loadings
+```
+
+```{r include=FALSE}
+cargas=data.frame(
+  "AFC"=c("**Variables**","Confianza en partidos","Confinaza en FF.AA.","Confinaza en PNP","Confinaza en Ejecutivo","Confinaza en Legislativo","Confinaza en Municipios","Confinaza en elecciones","**Proporción de la varianza**","**Varianza acumulada**","**KMO**= 0.87"),
+ "MR1" =c("**Confianza institucional**",0.309 ,0.203, 0.308 ,"**0.590**" ,"**0.401**" ,"**0.529**" ,"**0.551**",0.189 ,0.189 , "" ),
+ "MR2" =c("**Confianza en partidos políticos**","**0.931**" , 0.0 , 0.218 ,0.221 ,0.333 ,0.187 , 0.169,0.163 , 0.352 , "" ),
+ "MR3" =c("**Confianza en fuerzas del orden**",0.182,"**0.553**","**0.581**",0.254,0.428,0.217,0.339,0.155,0.507, "" )
+)
+```
+
+```{r echo=FALSE}
+kable(cargas)
+```
+
+<div style="text-align: justify">
+
+Como se observan en los resultados, el KMO resultante es de 0.87. Ello es un índice alto, lo que significa que es correcto realizar el presente análisis factorial.
+
+Son 3 los factores resultantes. Los nombres designados se deben justamente a las varaibles más relevantes en cada factor. En el factor de confianza institucional, las variables con mayor carga son las de confianza en el Ejecutivo, Legislativo, municipios y elecciones. Por su parte, en el factor de confianza en los partidos políticos, la única variable que tiene la mayor carga es la misma confianza hacia los partidos políticos. Finalmente, en el factor de la confianza en las fuerzas del orden, las variables con mayor carga son la confianza en las Fuerzas Armadas y Policía Nacional. 
+
+De tal forma, las 7 primeras variables sobre confianza han sido reducidas en 3 factores. Estos serán los usados en las próximas pruebas a desarollar. 
+
+## Análisis Bivariado 
+<div style="text-align: justify">
+
+En esta sección, se realizará un análisis bivariado entre la variable dependiente "participación electoral" y cada una de las 12 variables restantes. Con ello, se podrían ir esbozando posibles variables que tengan influencia en acudir a votar.
+
+### Relación entre participación electoral y las variables categóricas 
+
+**Prueba Chi Cuadrado**
+
+```{r include=FALSE}
+chisq.test(data$participacion,data$sexo)
+chisq.test(data$participacion,data$zona)
+```
+
+```{r echo=FALSE}
+pruebascat=data.frame("Prueba"=c("**Participación electoral con:**", "Sexo", "Zona"), P.valor=c("",0.6344,0.06137))
+kable(pruebascat)
+```
+
+
+<div style="text-align: justify">
+
+Se realizan las Pruebas de Chi cuadrado para ver si ambas variables categóricas se encuentran asociadas a la participación electoral. Se observa que el P.valor de ambas pruebas resultaron ser mayor que 0.05. Así que no permite rechazar la hipótesis nula. Por ende, se concluye que el sexo y la zona territorial son variables estadísticamente independientes con respecto a la participación electoral. Es decir, ambos pares de variables no se encuentran asociadas. 
+
+### Relación entre participación electoral y las variables numéricas 
+
+**Prueba T**
+
+```{r include=FALSE}
+t.test(data$edad~data$participacion)
+t.test(data$educacion~data$participacion)
+t.test(data$ingresos~data$participacion)
+t.test(data$satisfaccion_demo~data$participacion)
+t.test(data$democracia_mejor_regimen~data$participacion)
+t.test(data$interes_politica~data$participacion)
+t.test(data$confianza_institucional~data$participacion)
+t.test(data$confianza_partidos_politicos~data$participacion)
+t.test(data$confianza_fuerzas_orden~data$participacion)
+t.test(data$percepcion_corrupcion~data$participacion)
+```
+
+```{r include=FALSE}
+pruebasnum=data.frame(
+  "Prueba"=c("**Participación electoral con:**","Edad","Educación","Ingresos","Satisfacción con la democracia","Democracia como mejor régimen", "Interés en política", "Confinaza Institucional", "Confianza en partidos políticos", "Confinaza en Fuerzas del Orden","Percepción de la corrupción"),
+  "P valor"=c("","**0.000**",0.650,0.053,0.268,0.389,0.101,0.320,"**0.042**",0.525,"**0.003**")
+)
+```
+
+```{r echo=FALSE}
+kable(pruebasnum) 
+```
+
+<div style="text-align: justify">
+
+Luego de realizar la Prueba T entre la participación electoral y las variables numéricas, se observan dos tendencias. Por una lado, hay un grupo de pruebas que tuvieron como resultado un P.valor mayor que 0.05. Así que no permiten rechazar la hipótesis nula. Por ende, se concluye que las medias son iguales. Hay suficiente evidencia para indicar que no existe diferencia significativa en la educación, ingresos, satisfacción con la democracia, considerar a la democracia como mejor régimen, interés en política, confinaza institucional y la confinaza en las Fuerzas del Orden entre quienes participaron y no de las elecciones.
+
+Por otro lado, hay un grupo de pruebas que tuvieron como resultado un P.valor menor que 0.05. Así que permiten rechazar la hipótesis nula. Por ende, se concluye que las medias no son iguales. Hay suficiente evidencia para indicar que existe diferencia significativa en la edad, confianza en los partidos políticos y percepción de la corrupción entre quienes participaron y no de las elecciones. Estas diferencias en ambos grupos pueden observarse en los siguientes gráficos de medias ya que muestran que existe poco o no hay traslape entre los intervalos de confianza de ambos grupos con respecto a las 3 variables.
+
+```{r echo=FALSE}
+plotmeans(data$edad~data$participacion, p=0.95, 
+          xlab="Participación", ylab="Edad", 
+          main="Gráfico D.\nGráfico de medias - Edad")
+```
+
+```{r echo=FALSE}
+plotmeans(data$confianza_partidos_politicos~data$participacion, p=0.95, 
+         xlab="Participación", ylab="Confianza en los partidos políticos", 
+          main="Gráfico E.\nGráfico de medias - Confianza en los partidos políticos")
+```
+
+```{r echo=FALSE}
+plotmeans(data$percepcion_corrupcion~data$participacion, p=0.95, 
+         xlab="Participación", ylab="Percepción sobre la corrupción", 
+          main="Gráfico F.\nGráfico de medias - Percepción sobre la corrupción")
+```
+
+
+<div style="text-align: justify">
+
+En conclusión, luego de realizar el análisis bivariado entre las variables independientes con la participación electoral, se han obtenido resultados parciales. Como se vió, solo en 3 variables numéricas hay diferencia entre quienes participan y no de las elecciones. Estos resultados esbozan, como se ve en los gráficos, que quienes participan de las elecciones son ciudadanos con más edad, menos confianza en los partidos políticos y mayor percepción sobre la corrupción en el país. 
+
+## Modelos de regresión logísticos binarios
+<div style="text-align: justify">
+
+En esta sección, se desarrollarán los modelos de regresión logísticos binarios necesarios para poder hallar los determinantes de la participación electoral. Este es el tipo de modelo a utilizar ya que la variable dependiente es una variable dicotómica. 
+
+**Modelos Simples**
+
+<div style="text-align: justify">
+
+Primero, se han ejecutado 12 modelos simples. Hay un modelo para la partición electoral según cada variable dependiente. En la siguiente tabla, se resumen los 12 modelos planteados. 
+
+```{r include=FALSE}
+library(fastDummies)
+data=dummy_cols(data,  select_columns = c("participacion","sexo","zona"))
+```
+
+```{r include=FALSE}
+modelo1=glm(participacion_participo~sexo_mujer,family=binomial(link="logit"),data=data)
+modelo2=glm(participacion_participo~edad,family=binomial(link="logit"),data=data)
+modelo3=glm(participacion_participo~zona,family=binomial(link="logit"),data=data)
+modelo4=glm(participacion_participo~educacion,family=binomial(link="logit"),data=data)
+modelo5=glm(participacion_participo~ingresos,family=binomial(link="logit"),data=data)
+modelo6=glm(participacion_participo~satisfaccion_demo,family=binomial(link="logit"),data=data)
+modelo7=glm(participacion_participo~democracia_mejor_regimen,family=binomial(link="logit"),data=data)
+modelo8=glm(participacion_participo~interes_politica,family=binomial(link="logit"),data=data)
+modelo9=glm(participacion_participo~confianza_institucional,family=binomial(link="logit"),data=data)
+modelo10=glm(participacion_participo~confianza_partidos_politicos,family=binomial(link="logit"),data=data)
+modelo11=glm(participacion_participo~confianza_fuerzas_orden,family=binomial(link="logit"),data=data)
+modelo12=glm(participacion_participo~percepcion_corrupcion,family=binomial(link="logit"),data=data)
+```
+
+```{r include=FALSE}
+library(stargazer)
+library(jtools)
+library(ggstance)
+library(broom.mixed)
+library(huxtable)
+```
+
+```{r echo=FALSE}
+export_summs(modelo1, modelo2, modelo3, modelo4, modelo5, modelo6, modelo7, modelo8, modelo9, modelo10, modelo11, modelo12,type="text")
+```
+
+<div style="text-align: justify">
+
+Como se observa, cada modelo simple permite ver que variables ayudan a explicar la participación electoral de los ciudadanos peruanos. Para que las variables aporten al modelo, tienen que tener un P.valor menor que 0.05. En el gráfico, la forma de ubicar este dato es a través de la cantidad de asteriscos. Si el coeficeinte de la variable está acompañada con al menos un asterisco, significa que la variable sí aporte al modelo.
+
+En tal sentido, se concluye que las variables que aportan a sus respectivos modelos son la edad, zona Sierra Centro, ingresos, confianza en partidos políticos y percepcion de la corrupcion.
+
+Por ello, ahora estás variables serán usadas para elaborar diversos modelos múltiples y hallar los mejores determinantes de la participación electoral. 
+
+**Modelos Múltiples**
+
+Primero, se ha elaborado un modelo múltiple con las 5 variables seleccionadas. 
+
+```{r}
+mod1=glm(participacion_participo~edad+zona_Sierra_Centro+ingresos+confianza_partidos_politicos+percepcion_corrupcion,family=binomial(link="logit"),data=data)
+```
+
+```{r eval=FALSE, include=FALSE}
+step(mod1, direction = "backward",na.action = na.omit)
+```
+
+<div style="text-align: justify">
+
+Este modelo ha pasado por la "Prueba Step" en el que va generando diversos posibles modelos si es que ciertas variables no formasen parte del modelo. Ello con el fin de determinar qué modelo es el mejor. Para determinar el mejor modelo, se comparan los Criterios de Información Akaike (AIC). El modelo que tenga un menor AIC es el mejor.
+
+```{r include=FALSE}
+step1=data.frame(
+  "Prueba step 1"=c("**Si no está la variable:**", "Confianza en partidos políticos","Percepción de la corrupción", "Sin cambios (Modelo1)","Ingresos","Zon Sierra centro","Edad"),
+  "AIC"=c("",823.03,824.31,825.03,826.07,829.45,880.30)
+)
+```
+
+```{r echo=FALSE}
+kable(step1)
+```
+
+<div style="text-align: justify">
+
+Como se observa, según este primer paso. Si no estuviera la variable "Confianza en los partidos políticos" el AIC es menor (823.03), siendo así un mejor modelo. Por ello, en un segundo paso, la prueba elimina esa variable y vuelve a indicar que modelos serían aún mejores. 
+
+```{r include=FALSE}
+step2=data.frame(
+  "Prueba step 2"=c("**Si no está la variable:**","Percepción de la corrupción", "Sin cambios","Ingresos","Zon Sierra centro","Edad"),
+  "AIC"=c("",822.31,823.03,824.07,827.45,878.83)
+)
+```
+
+```{r echo=FALSE}
+kable(step2)
+```
+
+<div style="text-align: justify">
+
+En este segundo paso, la prueba step sugiere eliminar también la variable "Percepción de la corrupción". Si no estuviera esa variable, el AIC sería 822.31, el cual es menor.
+
+Por ello, en conclusión, luego de realizar estas pruebas, es mejor eliminar las varaibles de "Confianza en los partidos políticos" y "Percepción de la corrupción". Es decir, el segundo modelo solo debería tener las variables de "Edad", "Zona Sierra centro" e "Ingresos".
+
+```{r}
+mod2=glm(participacion_participo~edad+zona_Sierra_Centro+ingresos,family=binomial(link="logit"),data=data)
+```
+
+<div style="text-align: justify">
+
+A continuación, se presenta un resumen de los dos modelos múltiples planteados con un gráfico.
+
+```{r echo=FALSE}
+export_summs(mod1,mod2, type="text")
+```
+
+```{r echo=FALSE}
+testplot1 <- plot_summs(mod1, mod2,legend.title="Determinantes de la participación electoral",scale = TRUE, robust = TRUE)
+testplot1
+```
+
+<div style="text-align: justify">
+
+Como se observa, en el Modelo 1, el AIC es menor y de las 5 varibales, solo 2 son significativas. Por su parte, en el Modelo2, el AIC es mayor. Además, las 3 variables son significativas. Este modelo tiene una explicación del 10% según el Pseudo R2.
+
+En tal sentido, esta investigación considera que los determinantes de la aprticipación electoral son la edad, zona Sierra central y los ingresos de los ciudadanos. A continuación, se presentan los ODDS de las 3 variables del modelo 2 para analizar cuánto influyen en la probabilidad de ir a votar. 
+
+```{r echo=FALSE}
+kable(exp(coef(mod2)))
+```
+
+- **Edad**: 1.0603449 (relación directa)
+
+```{r}
+(1.0603449-1)*100
+```
+
+<div style="text-align: justify">
+
+Cuando un peruano aumenta su edad en una unidad, la probabilidad de que participe de las elecciones aumentará en 6.03%. 
+
+- **Zona Sierra Centro**: 3.4943904 (relación directa)
+
+```{r}
+(3.4943904-1)*100
+```
+
+<div style="text-align: justify">
+
+Cuando una persona sea de la Sierra central, la probabilidad de que participe de las elecciones aumentará en 249.43%. 
+
+- **Ingresos**: 1.0447033 (relación directa)
+
+```{r}
+(1.0447033 -1)*100
+```
+
+<div style="text-align: justify">
+
+Cuando el nivel de ingresos de una persona aumente en un nivel, la probabilidad de que participe de las elecciones aumentará en 4.47%.
+
+## Conclusiones 
+<div style="text-align: justify">
+
+La investigación ha validado en parte la hipótesis inicial ya que sí se han determinado que existen determinantes de la participación electoral en el Perú, pero solo fueron 3. En los resultados se ha determinado que la edad, el nivel de ingresos y ser de la zona de la Sierra central son determinantes de la participación electoral entre los peruanos. Consideramos necesario centrarnos en esa variables.
+
+Primero, respecto a la edad, se determinó que a mayor edad es más probable ir a votar. Entonces, los ciudadanos jóvenes tienen menos probabilidad de votar.  Por eso, es necesario atender a la juventud en cuanto a su participación electoral, puesto que la juventud probablemente no se sienta representada por las figuras politicas. Ello debido a que recién ingresan al mundo electoral al cumplir la mayoría de edad y no se sienten identificados con la clase política actual. 
+
+Segundo, respecto al nivel de ingresos, se determinó que a mayor nivel de ingresos hay más probabilidad de participar de las elecciones. Entonces, es necesario enfocarse en las personas con menores ingresos ya que probablemente se les dificulta el acudir a votar por sus bajos recursos. El simple hecho de movilizarse a los locales es un gasto. Además, muchas personas dependen de sus trabajos del día a día. Entonces, el ir a votar y perder ese día de trabajo es una gran pérdida en sus economías. Así que tienen menos probabilidad de ir a votar. 
+
+Finalmente, respecto a la zona geográfica, se determinó que ser la Sierra central del Perú aumenta la probabilidad de ir a votar. Esta zona la conforman las regiones de Huancavelica, Pasco, Huánuco y Junín. Una característica que tienen un común estas regiones es que las tres primeras se encuentran entre las regiones más pobres del Perú (IPE, 2021). Ello quiere decir que los ciudadanos de las regiones donde existe una menor calidad de vida tienen mayor probabilidad de ir a votar. En tal sentido, es posible que estas personas tengan la esperanza de que ocurra un cambio significativo en sus vidas si participan de las elecciones votando por su opción favorita. Entonces, el hecho de votar tendría importancia para personas en condiciones desfavorables, lo cual va en contra del imaginario común de que da lo mismo votar por quien sea. 
+
+Para concluir, se recalca de que tampoco no se pueden olvidar otras variables como la "confianza hacia los partidos políticos" y la "percepción sobre la corrupción". Si bien estas variables fueron descartadas del modelo múltiple, en sus modelos simples tuvieron relevancia. Así que también es importante tenerlas en cuenta para futuras investigaciones. 
+
+De igual forma, los resultados de esta investigación deben ser analizados cuidadosamente ya que el modelo elegido solo tiene una explicación del 10%, lo cual es un limitante. Sin embargo, ello no descalifica al modelo, ya que de por sí plantea factores que son necesarios e importantes de considerar al hablar de la participación electoral. 
+
+## Bibliografía 
+<div style="text-align: justify">
+
+Blais, A. (2000) To vote or not to vote? The Merits and Limits of Rational Choice Theory. Pittsburgh: University of Pittsburgh Press.
+
+Blais, A. (2008). ¿Qué afecta a la participación electoral? Revista Española de Ciencia Política, (18),  9-27. https://recyt.fecyt.es/index.php/recp/article/view/37456
+
+Casullo, M. (2015). ¿En el nombre del pueblo? Por qué estudiar al populismo hoy. POSTData. Revista de Reflexión y Análisis Político, 19(2), 277-313.
+
+Hidalgo, M. y Boyco, A. (8 de junio de 2021). Elecciones Perú 2021: ¿Cómo varió el ausentismo para la segunda vuelta electoral? El Comercio. https://elcomercio.pe/politica/elecciones/elecciones-2021-como-vario-el-ausentismo-para-la-segunda-vuelta-elecciones-2021-elecciones-segunda-vuelta-onpe-resultados-pedro-castillo-peru-libre-fuerza-popular-keiko-fujimori-ec-data-noticia/?ref=ecr
+
+Instituto Peruano de Economía. (14 de mayo de 2021). Pobreza 2020: El Perú retrocede 10 años. https://www.ipe.org.pe/portal/pobreza-2020-el-peru-retrocede-10-anos/ 
+
+ONPE (2019)  Sanciones, Multas y Abstencionismo Electoral en el Perú. Tres estudios sobre la participación electoral  y voto obligatorio. https://www.onpe.gob.pe/modEducacion/Publicaciones/sanciones-multas-abstencionismo.pdf
+
+Maldonado, A. (2011). Compulsory Voting and the decision to vote. Americas Barometer Insights, (63), 1-9.
+
+Nohlen, D. (2004). La participación electoral como objeto de estudio. Elecciones, 3, 137-157. https://www.web.onpe.gob.pe/modEducacion/Publicaciones/L-0025.pdf#page=21  <div/>
